@@ -1,40 +1,46 @@
 /**
  * Функция для расчета выручки
- * @param purchase запись о покупке
- * @param _product карточка товара
- * @returns {number}
+ * @param {Object} purchase - запись о покупке
+ * @param {Object} _product - карточка товара (не используется)
+ * @returns {number} - выручка от продажи
  */
 function calculateSimpleRevenue(purchase, _product) {
     const { sale_price, quantity, discount } = purchase;
     const revenue = sale_price * quantity * (1 - discount / 100);
-    return revenue;
+    return +revenue.toFixed(2);
 }
 
 /**
  * Функция для расчета бонусов
- * @param index порядковый номер в отсортированном массиве
- * @param total общее число продавцов
- * @param seller карточка продавца
- * @returns {number}
+ * @param {number} index - порядковый номер в отсортированном массиве
+ * @param {number} total - общее число продавцов
+ * @param {Object} seller - карточка продавца (должен содержать поле profit)
+ * @returns {number} - сумма бонуса в денежных единицах
  */
 function calculateBonusByProfit(index, total, seller) {
-    if (index === 0) return 0.15;         // 1 место - 15%
-    if (index <= 2) return 0.10;          // 2-3 места - 10%
-    if (index < total - 1) return 0.05;   // Все кроме последнего - 5%
-    return 0;                             // Последний - 0%
+    const profit = seller.profit || 0;
+    if (index === 0) return +(profit * 0.15).toFixed(2);      // 1 место - 15%
+    if (index <= 2) return +(profit * 0.10).toFixed(2);       // 2-3 места - 10%
+    if (index < total - 1) return +(profit * 0.05).toFixed(2); // Остальные (кроме последнего) - 5%
+    return 0;                                                // Последний - 0%
 }
 
 /**
  * Функция для анализа данных продаж
- * @param data
- * @param options
- * @returns {{revenue, top_products, bonus, name, sales_count, profit, seller_id}[]}
+ * @param {Object} data - входные данные
+ * @param {Object} options - настройки
+ * @returns {Array} - массив с результатами анализа
  */
 function analyzeSalesData(data, options) {
     // Проверка входных данных
     if (!data || !Array.isArray(data.sellers) || !Array.isArray(data.products) || !Array.isArray(data.purchase_records)) {
         throw new Error("Некорректные входные данные");
     }
+    
+    // Проверка на пустые массивы
+    if (data.sellers.length === 0) throw new Error("Пустой массив sellers");
+    if (data.products.length === 0) throw new Error("Пустой массив products");
+    if (data.purchase_records.length === 0) throw new Error("Пустой массив purchase_records");
 
     // Проверка наличия опций
     if (!options || typeof options.calculateRevenue !== 'function' || typeof options.calculateBonus !== 'function') {
@@ -87,7 +93,7 @@ function analyzeSalesData(data, options) {
 
     // Назначение премий и подготовка результата
     return sellersStats.map((seller, index) => {
-        const bonusPercent = calculateBonus(index, sellersStats.length, seller);
+        const bonus = calculateBonus(index, sellersStats.length, seller);
         const topProducts = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
             .sort((a, b) => b.quantity - a.quantity)
@@ -100,7 +106,7 @@ function analyzeSalesData(data, options) {
             profit: +seller.profit.toFixed(2),
             sales_count: seller.sales_count,
             top_products: topProducts,
-            bonus: +(seller.profit * bonusPercent).toFixed(2)
+            bonus: +bonus.toFixed(2)
         };
     });
 }
