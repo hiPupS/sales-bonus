@@ -1,0 +1,25 @@
+name: Run Tests
+
+on: [push, pull_request] # Запускать при пуше и пул-реквестах
+
+jobs:
+  test:
+    runs-on: ubuntu-latest # Используем последний Ubuntu
+    
+    steps:
+    # Шаг 1: Получить код из репозитория
+    - uses: actions/checkout@v3
+    
+    # Шаг 2: Установить Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18' # Версия Node.js
+        
+    # Шаг 3: Установить зависимости
+    - name: Install dependencies
+      run: npm install
+      
+    # Шаг 4: Запустить тесты
+    - name: Run tests
+      run: npm test
