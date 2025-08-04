@@ -2,12 +2,12 @@
  * Функция для расчета выручки
  * @param {Object} purchase - запись о покупке
  * @param {Object} _product - карточка товара (не используется)
- * @returns {number} - выручка от продажи
+ * @id70533735 (@returns) {number} - выручка от продажи
  */
 function calculateSimpleRevenue(purchase, _product) {
     const { sale_price, quantity, discount } = purchase;
     const revenue = sale_price * quantity * (1 - discount / 100);
-    return Math.round(revenue * 100) / 100;
+    return revenue;
 }
 
 /**
@@ -15,7 +15,7 @@ function calculateSimpleRevenue(purchase, _product) {
  * @param {number} index - порядковый номер в отсортированном массиве
  * @param {number} total - общее число продавцов
  * @param {Object} seller - карточка продавца (должен содержать поле profit)
- * @returns {number} - сумма бонуса в денежных единицах
+ * @id70533735 (@returns) {number} - сумма бонуса в денежных единицах
  */
 function calculateBonusByProfit(index, total, seller) {
     const profit = seller.profit || 0;
@@ -29,7 +29,7 @@ function calculateBonusByProfit(index, total, seller) {
  * Функция для анализа данных продаж
  * @param {Object} data - входные данные
  * @param {Object} options - настройки
- * @returns {Array} - массив с результатами анализа
+ * @id70533735 (@returns) {Array} - массив с результатами анализа
  */
 function analyzeSalesData(data, options) {
     // Проверка структуры данных
@@ -69,6 +69,7 @@ function analyzeSalesData(data, options) {
         if (!seller) return;
 
         seller.sales_count += 1;
+        seller.revenue += record.total_amount;
 
         record.items.forEach(item => {
             const product = productsMap.get(item.sku);
@@ -78,8 +79,7 @@ function analyzeSalesData(data, options) {
             const cost = product.purchase_price * item.quantity;
             const profit = revenue - cost;
 
-            seller.revenue = Math.round((seller.revenue + revenue) * 100) / 100;
-            seller.profit = Math.round((seller.profit + profit) * 100) / 100;
+            seller.profit += profit
             
             seller.products_sold[item.sku] = (seller.products_sold[item.sku] || 0) + item.quantity;
         });
@@ -99,8 +99,8 @@ function analyzeSalesData(data, options) {
         return {
             seller_id: seller.id,
             name: seller.name,
-            revenue: seller.revenue,
-            profit: seller.profit,
+            revenue: +seller.revenue.toFixed(2),
+            profit: +seller.profit.toFixed(2),
             sales_count: seller.sales_count,
             top_products: topProducts,
             bonus: bonus
